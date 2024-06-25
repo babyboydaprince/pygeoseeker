@@ -1,0 +1,4 @@
+ipinfo
+pyfiglet
+termcolor
+colorama
