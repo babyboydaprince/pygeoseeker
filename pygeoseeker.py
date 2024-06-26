@@ -1,24 +1,27 @@
 import os
 import sys
-import time
-import platform
 import subprocess
+import time
+import argparse
 import ipinfo
+import platform
+from termcolor import cprint
 
 
 class PyGeoSeeker:
 
-    """SET-UP"""
     def __init__(self):
         self.os_name = platform.system()
-        self.requirements = [
-            'ipinfo',
-            'pyfiglet',
-            'termcolor',
-            'colorama']
-        self.install_missing_packages(self.requirements)
+        self.target_ip = ''
+        self.access_token = ''
         self.main()
-    
+
+    @staticmethod
+    def banner():
+        from pyfiglet import Figlet
+        f = Figlet(font='slant', width=50)
+        cprint(f.renderText('P y G e o s e e k e r'), 'yellow', attrs=['blink', 'bold'])
+
     @staticmethod
     def is_package_installed(package_name):
         try:
@@ -34,7 +37,6 @@ class PyGeoSeeker:
         try:
             if self.os_name == 'Windows':
                 missing_packages = [pkg for pkg in packages if not self.is_package_installed(pkg)]
-
                 if missing_packages:
                     print(f"Installing missing packages: {', '.join(missing_packages)}")
                     subprocess.check_call([sys.executable, '-m', 'pip', 'install', *missing_packages])
@@ -48,29 +50,19 @@ class PyGeoSeeker:
 
             elif self.os_name == 'Linux':
                 missing_packages = [pkg for pkg in packages if not self.is_package_installed(pkg)]
-
                 if missing_packages:
                     print(f"Installing missing packages: {', '.join(missing_packages)}")
                     subprocess.check_call([sys.executable, '-m', 'pip', 'install', *missing_packages])
                     print(f'\nInstallation finished. [{checkmark}]')
                     time.sleep(2)
-                    os.system('cls')
+                    os.system('clear')
                 else:
                     print(f'\nRequirements already installed. [{checkmark}]')
                     time.sleep(2)
                     os.system('clear')
-            elif self.os_name == 'Linux' and os.geteuid() != 0:
-                print("\nIt's recommended to run this script as root (sudo) "
-                      "on Linux for system-wide installation.\n")
-                print("You can run the script as root using: "
-                      "sudo python pygeoseeker.py\n")
-                print("If you want to install packages in a "
-                      "virtual environment, use a virtual environment.\n")
-                print("\nExiting...")
-                sys.exit(1)
+
             else:
                 missing_packages = [pkg for pkg in packages if not self.is_package_installed(pkg)]
-
                 if missing_packages:
                     print(f"\nInstalling missing packages: {', '.join(missing_packages)}")
                     subprocess.check_call([sys.executable, '-m', 'pip', 'install', *missing_packages])
@@ -83,83 +75,152 @@ class PyGeoSeeker:
                     sys.stdout.flush()
         except Exception as ex:
             print('\nAn exception occurred: \n', ex)
-            sys.exit(1)
 
-    @staticmethod
-    def banner():
-        from pyfiglet import Figlet
-        from termcolor import colored
+    def action_menu(self, ip_address, access_token, help_menu, os_detected):
+        parser = argparse.ArgumentParser(description="Geolocation tracker")
+        parser.add_argument(
+            "--target",
+            type=str,
+            metavar="<target>",
+            help="Target IP to track location",
+        )
+        parser.add_argument(
+            "--access-token",
+            type=str,
+            metavar="<token>",
+            help="IPinfo access token, to obtain one, sign up at https://ipinfo.io",
+        )
 
-        f = Figlet(font='mini')
+        args = parser.parse_args()
+        ip_address = args.target
+        access_token = args.token
+        help_menu = parser.print_help()
 
-        print('\n')
-        print(colored(f.renderText('P y G e o s e e k e r'),
-                      'yellow',
-                      attrs=['blink']))
-        
-    @classmethod
-    def running_animation(cls):
-        frames = ["|", "/", "-", "\\"]
-        while True:
-            for frame in frames:
-                sys.stdout.write(f"\rRunning {frame}")
-                sys.stdout.flush()
-                time.sleep(0.1)  # Adjust the speed of animation here
-    
-    def os_hint(self):
-        if self.os_name == 'Linux':
-            print('Linux OS detected.')
-            print('Hint: You must install the requirements '
-                  'and run the script as root.\n')
-        elif self.os_name == 'Windows':
-            print('Windows OS detected.')
-            print("Lock n' Load.\n")
+        if os_detected == 'Linux':
+            try:
+                if not ip_address and not access_token:
+                    os.system('clear')
+                    print('\n')
+                    self.banner()
+                    print('\n')
+                    return help_menu
+                elif not ip_address:
+                    os.system('clear')
+                    self.banner()
+                    print('\n\nNo target specified, please provide a valid target.\n')
+                    return False
+                elif not access_token:
+                    os.system('clear')
+                    self.banner()
+                    print('\n\nNo access token specified, please provide an access token.\n')
+                    return False
+                else:
+                    return ip_address, access_token
+            except KeyboardInterrupt:
+                os.system('clear')
+                self.banner()
+                print('\n')
+                cprint(f"PyGeoSeeker Terminated.", 'green')
+                print('\n')
+                return False
 
-    @staticmethod
-    def action_menu():
-        from colorama import Fore
-        
-        target_ip = input("\nSet the TARGET IP ADDRESS to track location: ")
-        ip_input = str(target_ip)
-        
-        ipinfo_token = input("\nSet your IPinfo TOKEN: ")
-        token_input = str(ipinfo_token)
+        elif os_detected == 'Windows':
+            try:
+                if not ip_address and not access_token:
+                    os.system('cls')
+                    print('\n')
+                    self.banner()
+                    print('\n')
+                    return help_menu
+                elif not ip_address:
+                    os.system('cls')
+                    self.banner()
+                    print('\n\nNo target specified, please provide a valid target.\n')
+                    return False
+                elif not access_token:
+                    os.system('cls')
+                    self.banner()
+                    print('\n\nNo access token specified, please provide an access token.\n')
+                    return False
+                else:
+                    return ip_address, access_token
+            except:
+                os.system('cls')
+                self.banner()
+                print('\n')
+                cprint(f"PyGeoSeeker Terminated.", 'green')
+                print('\n')
+                return False
+        else:
+            try:
+                if not ip_address and not access_token:
+                    print('\n')
+                    self.banner()
+                    print('\n')
+                    return help_menu
+                elif not ip_address:
+                    print('\n')
+                    self.banner()
+                    print('\n\nNo target specified, please provide a valid target.\n')
+                    return False
+                elif not access_token:
+                    print('\n')
+                    self.banner()
+                    print('\n\nNo access token specified, please provide an access token.\n')
+                    return False
+                else:
+                    return ip_address, access_token
+            except:
+                print('\n')
+                self.banner()
+                print('\n')
+                cprint(f"PyGeoSeeker Terminated.", 'green')
+                print('\n')
+                return False
 
-        return ip_input, token_input
-            
-    # TODO: Linux execution script
-    # TODO: Windows execution script
-    def pygeoseeker(self):
-        from colorama import Fore
-
+    def pygeoseeker(target_ip, ipinfo_token):
         try:
-            if self.os_name == 'Linux':
-                handler = ipinfo.getHandler(self.ipinfo_token)
-                details = handler.getDetails(self.target_ip)
-                
-                for key, value in details.all.items():
-                    print(f"{key}: {value}")
-                print('\n')
-            else:
-                handler = ipinfo.getHandler(self.ipinfo_token)
-                details = handler.getDetails(self.target_ip)
-                
-                for key, value in details.all.items():
-                    print(f"{key}: {value}")
-                print('\n')
+            connection = ipinfo_token.getHandler(target_ip)
+            get_details = connection.getDetails(target_ip)
+
+            cprint(f"Geolocation Details for {target_ip}:", 'green', attrs=['bold'])
+            cprint("--------------------------------------------------", 'green', attrs=['bold'])
+            cprint("Key                 | Value", 'green', attrs=['bold'])
+            cprint("--------------------------------------------------", 'green', attrs=['bold'])
+            for key, value in get_details.all.items():
+                cprint(f"{key:<20} | {value}", 'yellow')
+            cprint("--------------------------------------------------", 'green', attrs=['bold'])
+            print('\n')
         except KeyboardInterrupt:
             print('\n')
-            print(rf"{Fore.GREEN}PyGeoSeeker Terminated.{Fore.RESET}")
+            cprint(f"PyGeoSeeker Terminated.", 'green')
             print('\n')
-            sys.exit(1)
-    
-    """MAIN RUNNER"""
+        except Exception as e:
+            cprint(f"Error: {e}", 'red')
+
     def main(self):
-        self.banner()
-        self.os_hint()
-        self.target_ip, self.ipinfo_token = self.action_menu()
-        self.ipinfo_token = self.action_menu()
-        self.pygeoseeker()
+        required_packages = [
+            'ipinfo',
+            'termcolor',
+            'colorama',
+            'pyfiglet'
+        ]
+
+        if sys.argv[1] == '--target' and sys.argv[2] == '--access-token':
+            self.install_missing_packages(required_packages)
+            self.target_ip, self.ipinfo_token = self.action_menu('--target', '--access-token', [], self.os_name)
+            if self.target_ip and self.ipinfo_token:
+                self.pygeoseeker(self.target_ip, self.ipinfo_token)
+
+        elif sys.argv[1] == '--help':
+            print('\n')
+            self.banner()
+            self.target_ip, self.ipinfo_token = self.action_menu([], [], '--help', self.os_name)
+            print('\n')
+                
+        else:
+            print('\n')
+            self.banner()
 
 
 if __name__ == '__main__':
