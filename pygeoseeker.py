@@ -1,26 +1,27 @@
 import os
-import sys
-import subprocess
-import time
-import argparse
-import ipinfo
 import platform
+import subprocess
+import sys
+import time
+import ipinfo
 from termcolor import cprint
+from argparse import ArgumentParser
 
 
 class PyGeoSeeker:
 
     def __init__(self):
         self.os_name = platform.system()
-        self.target_ip = ''
-        self.access_token = ''
         self.main()
 
     @staticmethod
     def banner():
         from pyfiglet import Figlet
-        f = Figlet(font='slant', width=50)
-        cprint(f.renderText('P y G e o s e e k e r'), 'yellow', attrs=['blink', 'bold'])
+        f = Figlet(font='slant')
+        print('\n')
+        cprint(f.renderText('P y G e o'), 'yellow')
+        cprint(f.renderText('S e e k e r'), 'yellow')
+        print('\n')
 
     @staticmethod
     def is_package_installed(package_name):
@@ -76,116 +77,43 @@ class PyGeoSeeker:
         except Exception as ex:
             print('\nAn exception occurred: \n', ex)
 
-    def action_menu(self, ip_address, access_token, help_menu, os_detected):
-        parser = argparse.ArgumentParser(description="Geolocation tracker")
+    def main(self):
+        parser = ArgumentParser(description='--------Geolocation tracker--------',
+                                usage='python pygeoseeker.py --help',
+                                epilog='python3 pygeoseeker.py '
+                                       '--target [IP] '
+                                       '--access-token [TOKEN]')
+
+        parser.add_argument_group('Required Arguments:')
+
         parser.add_argument(
-            "--target",
+            "-t", "--target",
             type=str,
             metavar="<target>",
             help="Target IP to track location",
+            required=True
         )
         parser.add_argument(
-            "--access-token",
+            "-token", "--access-token",
             type=str,
             metavar="<token>",
             help="IPinfo access token, to obtain one, sign up at https://ipinfo.io",
+            required=True
         )
 
         args = parser.parse_args()
-        ip_address = args.target
-        access_token = args.token
-        help_menu = parser.print_help()
 
-        if os_detected == 'Linux':
-            try:
-                if not ip_address and not access_token:
-                    os.system('clear')
-                    print('\n')
-                    self.banner()
-                    print('\n')
-                    return help_menu
-                elif not ip_address:
-                    os.system('clear')
-                    self.banner()
-                    print('\n\nNo target specified, please provide a valid target.\n')
-                    return False
-                elif not access_token:
-                    os.system('clear')
-                    self.banner()
-                    print('\n\nNo access token specified, please provide an access token.\n')
-                    return False
-                else:
-                    return ip_address, access_token
-            except KeyboardInterrupt:
-                os.system('clear')
-                self.banner()
-                print('\n')
-                cprint(f"PyGeoSeeker Terminated.", 'green')
-                print('\n')
-                return False
+        self.pygeoseeker(args.target, args.access_token)
 
-        elif os_detected == 'Windows':
-            try:
-                if not ip_address and not access_token:
-                    os.system('cls')
-                    print('\n')
-                    self.banner()
-                    print('\n')
-                    return help_menu
-                elif not ip_address:
-                    os.system('cls')
-                    self.banner()
-                    print('\n\nNo target specified, please provide a valid target.\n')
-                    return False
-                elif not access_token:
-                    os.system('cls')
-                    self.banner()
-                    print('\n\nNo access token specified, please provide an access token.\n')
-                    return False
-                else:
-                    return ip_address, access_token
-            except:
-                os.system('cls')
-                self.banner()
-                print('\n')
-                cprint(f"PyGeoSeeker Terminated.", 'green')
-                print('\n')
-                return False
-        else:
-            try:
-                if not ip_address and not access_token:
-                    print('\n')
-                    self.banner()
-                    print('\n')
-                    return help_menu
-                elif not ip_address:
-                    print('\n')
-                    self.banner()
-                    print('\n\nNo target specified, please provide a valid target.\n')
-                    return False
-                elif not access_token:
-                    print('\n')
-                    self.banner()
-                    print('\n\nNo access token specified, please provide an access token.\n')
-                    return False
-                else:
-                    return ip_address, access_token
-            except:
-                print('\n')
-                self.banner()
-                print('\n')
-                cprint(f"PyGeoSeeker Terminated.", 'green')
-                print('\n')
-                return False
-
+    @staticmethod
     def pygeoseeker(target_ip, ipinfo_token):
         try:
-            connection = ipinfo_token.getHandler(target_ip)
+            connection = ipinfo.getHandler(ipinfo_token)
             get_details = connection.getDetails(target_ip)
-
+            # PyGeoSeeker.banner()
             cprint(f"Geolocation Details for {target_ip}:", 'green', attrs=['bold'])
             cprint("--------------------------------------------------", 'green', attrs=['bold'])
-            cprint("Key                 | Value", 'green', attrs=['bold'])
+            cprint("Key                  | Value", 'green', attrs=['bold'])
             cprint("--------------------------------------------------", 'green', attrs=['bold'])
             for key, value in get_details.all.items():
                 cprint(f"{key:<20} | {value}", 'yellow')
@@ -198,31 +126,17 @@ class PyGeoSeeker:
         except Exception as e:
             cprint(f"Error: {e}", 'red')
 
-    def main(self):
-        required_packages = [
-            'ipinfo',
-            'termcolor',
-            'colorama',
-            'pyfiglet'
-        ]
-
-        if sys.argv[1] == '--target' and sys.argv[2] == '--access-token':
-            self.install_missing_packages(required_packages)
-            self.target_ip, self.ipinfo_token = self.action_menu('--target', '--access-token', [], self.os_name)
-            if self.target_ip and self.ipinfo_token:
-                self.pygeoseeker(self.target_ip, self.ipinfo_token)
-
-        elif sys.argv[1] == '--help':
-            print('\n')
-            self.banner()
-            self.target_ip, self.ipinfo_token = self.action_menu([], [], '--help', self.os_name)
-            print('\n')
-                
-        else:
-            print('\n')
-            self.banner()
-
 
 if __name__ == '__main__':
     # You can run, but you can't hide
+    required_packages = [
+        'ipinfo',
+        'termcolor',
+        'colorama',
+        'pyfiglet'
+    ]
+
+    PyGeoSeeker.banner()
+    PyGeoSeeker().install_missing_packages(required_packages)
+    PyGeoSeeker.banner()
     PyGeoSeeker()
