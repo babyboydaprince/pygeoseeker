@@ -110,7 +110,6 @@ class PyGeoSeeker:
         try:
             connection = ipinfo.getHandler(ipinfo_token)
             get_details = connection.getDetails(target_ip)
-            # PyGeoSeeker.banner()
             cprint(f"Geolocation Details for {target_ip}:", 'green', attrs=['bold'])
             cprint("--------------------------------------------------", 'green', attrs=['bold'])
             cprint("Key                  | Value", 'green', attrs=['bold'])
